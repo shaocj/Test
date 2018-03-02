@@ -4,7 +4,9 @@
 2
 -----
 3
+TLC320ADC3101 Low-Power Stereo ADC With Embedded miniDSP for Wireless Handsets and Portable Audio
 SDRAM和处理器寻址的几点理解
+
 
 每个芯片的是16跟数据线，x2就组成32位数据线。地址地址13根，BA0 BA1 接到ADDR24 ADDR25   【这个是片选择哪一个bank】，为什么？
 http://blog.csdn.net/zmnqazqaz/article/details/51298289
