@@ -1,0 +1,271 @@
+https://blog.csdn.net/hpu11/article/details/54965020
+https://www.cnblogs.com/kevinhwang/p/5647021.html
+https://blog.csdn.net/qq_28992301/article/details/53321610
+https://blog.csdn.net/qq_28992301/article/details/51873201
+https://blog.csdn.net/qq_28992301/article/details/52082892
+https://blog.csdn.net/su1041168096/article/details/79283414
+https://www.cnblogs.com/aaronLinux/p/5496559.html
+
+接下来我们了解一下硬件引脚如何在设备树中进行描述以使其能够执行外设功能。在“at91-
+sama5d2_xplained_common.dtsi”文件中找到以下代码行。
+pinctrl_spi0_default: spi0_default {
+pinmux = <PIN_PA14__SPI0_SPCK>,
+<PIN_PA15__SPI0_MOSI>,
+<PIN_PA16__SPI0_MISO>,
+<PIN_PA17__SPI0_NPCS0>;
+bias-disable;
+};
+这里定义了以下SPI线：
+PA14——SPI时钟
+PA15——SPI MOSI
+PA16——SPI MISO
+PA17——片选
+这些定义位于“sama5d2-pinfunc.h”文件中：
+#define PIN_PA14__SPI0_SPCK PINMUX_PIN(PIN_PA14, 1, 1)
+#define PIN_PA15__SPI0_MOSI PINMUX_PIN(PIN_PA15, 1, 1)
+#define PIN_PA16__SPI0_MISO PINMUX_PIN(PIN_PA16, 1, 1)
+#define PIN_PA17__SPI0_NPCS0 PINMUX_PIN(PIN_PA17, 1, 1)
+从数据手册可知，PA15-PA17在配置为外设A时执行SPI功能。因此括号中的第2个字段表示外设功能：
+(PIN_PA14, 1, 1)。“2”表示外设B，“3”表示外设C，依此类推，第三个字段代表IO set
+ 
+
+编译设备树dts为dtb
+前面的linux内核源码目录中已经包含了设备树编译器Device Tree Compiler(dtc)，在目录arch/arm/boot/dts/目录下。
+将前面生成的xilinx.dts文件拷贝到ubuntu下，使用如下命令进行编译
+dtc -I dts -O dtb -o devicetree.dtb xilinx.dts
+上面Dtc编译器有几个选项和参数：
+-I是输入文件格式，在本文中是dts
+-O是目标文件格式，在本文中是dtb
+-o是目标文件路径
+最后一个参数是输入文件路径
+编译之后会在目标文件路径生成一个dtb文件，这个文件名必须按照前面uboot默认配置中的文件进行命名，本文中是devicetree.dtb
+使用“make ARCH=arm”命令编译内核映像时，会自动编译dtb。不过，若要仅编译dtb，可使用以
+下命令：
+$ make ARCH=arm dtb
+
+
+
+
+Device Tree
+在arch/arm/boot/dts里面是设备树的源文件，修改好，
+然后退回内核的顶层目录，执行 make dtbs命令，编译出.dtb文件
+然后在uboot源文件里添加一个宏定义，是关于设备树的，忘记是什么宏了，
+Device Tree可以描述的信息包括CPU的数量和类别、内存基地址和大小、总线和桥、外设连接、中断控制器和中断使用情况、GPIO控制器和GPIO使用情况、Clock控制器和Clock使用情况。
+1、设备树的组成和使用
+设备树包括DTC（device tree compiler）,DTS(device tree source和DTB（device tree blob）。
+DTS、DTSI由DTC转化成DTB。
+1.1 DTS和DTSI(源文件）
+.dts文件是一种ASCII文本对Device Tree的描述，放置在内核的/arch/arm/boot/dts目录。一般而言，一个.dts文件对应一个ARM的machine。 
+由于一个SOC可能有多个不同电路板，而每个电路板拥有一个.dts。这些dts势必会存在许多共同部分，为了减少代码的冗余，设备树讲这些共同部分提炼保存在.dtsi文件中，供不同的dts共同使用。.dtsi的使用方法，类似于C语言的头文件，在dts文件中需要进行include .dtsi文件。当然，dtsi本身也支持include另一个dtsi文件。
+1.2 DTC（编译工具）
+DTC为编译工具，它可以将.dts文件编译成.dtb文件。DTC的源码位于内核的scripts/dtc目录下，内核选中CONFIG_OF，编译内核的时候，主机可执行程序DTC就会被编译出来。即scripts/dtc/Makefile中
+1.	hostprogs-y:=dtc
+2.	always:=$(hostprogs-y) 
+在内核的arch/arm/boot/dts/Makefile中，若选中某种SOC，则与其对应相关的所有dtb文件都将被编译出来。在Linux下，make dtbs可单独编译dtb.以下截取了TEGRA平台的一部分。
+3.	ifeq($(CONFIG_OF),y)
+4.	dtb-$(CONFIG_ARCH_TEGRA)+=tegra20-harmony.dtb\
+5.	tegra30-beaver.dtb\
+6.	tegra114-dalmore.dtb\
+7.	tegra124-ardbeg.dtb
+1.3 DTB(二进制文件)
+DTC编译.dts生成的二进制文件(.dtb),bootloader在引到内核时，会预先读取.dtb到内存，进而由内核解析
+1.3. memory node
+memory {
+device_type = "memory";
+reg = <0x00000000 0x20000000>; /* 512 MB */
+};
+一般而言，在.dts中不对memory进行描述，而是通过bootargs中类似521M@0x00000000的方式传递给内核。
+2、开发板分析
+从datasheet里面可以看出：
+ 
+Dts对应：
+memory {
+reg = <0x20000000 0x20000000>;
+};
+[..]
+ns_sram: sram@00200000 {
+compatible = "mmio-sram";
+reg = <0x00200000 0x20000>;
+};
+通过用户空间访问设备树
+在运行嵌入式Linux发行版的目标上，可使用/proc文件系统中的设备树条目查看DT的内容。借此，我们
+可检查“model”与.dts文件是否匹配。
+root@sama5d2_xplained:~# cat /proc/device-tree/model
+Atmel SAMA5D2 Xplained
+“/proc/device-tree”是根节点。我们可看到，“model”是“Atmel SAMA5D2 Xplained”。现在我
+们来检查下dts文件中的值。
+/dts-v1/;
+#include "at91-sama5d2_xplained_common.dtsi"
+/ {
+model = "Atmel SAMA5D2 Xplained";
+compatible = "atmel,sama5d2-xplained", "atmel,sama5d2",
+"atmel,sama5";
+因此，我们可以看到设备树源代码与我们从用户空间的/proc文件系统中看到
+的内容是如何匹配的。
+修改设备树
+修改设备树以访问I01 Xplained板上的温度传感器。温度传感器接至SAMA5D2Xplained板上的EXT2。从传感器用户指南上可知，连接器上的引脚11和12通过I2C连接到温度传感器。
+ 
+
+从SAMA5D2 Xplained板用户指南可知，连接器EXT2的引脚11和12连接至SAMA5D2微处理器的PB28和
+PB29。
+ 
+根据SAMA5D2数据手册，引脚PB28和PB29在外设C模式下用作FLEXCOM0。
+ 
+因此，下面我们开始对设备树文件进行所需更改，以确保PB28和PB29在外设C和I2C模式下配置为
+FLEXCOM0。我们还需确保没有其他外设使用PB28和PB29。
+根据此数据手册，PB28/PB29引脚还用于LCD、ISC和其他功能。因此，如果使能其中的任一外设，则会
+发生冲突
+ 
+从dts里搜索flexcom定义：
+flx0: flexcom@f8034000 {
+				atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_USART>;
+				status = "disabled"; /* conflict with ISC_D2 & ISC_D3 data pins */
+
+				uart5: serial@200 {
+					compatible = "atmel,at91sam9260-usart";
+					reg = <0x200 0x200>;
+					interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+					clocks = <&flx0_clk>;
+					clock-names = "usart";
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_flx0_default>;
+					atmel,fifo-size = <32>;
+					status = "okay";
+				};
+			};
+我们会发现：
+i. Flexcom0（flx0）已禁止。因此，我们先将其状态改为“正常”来使能。
+ii. flexcom模式设为“ ATMEL_FLEXCOM_MODE_USART ”。因为是I2C,因此我们将其更改为
+“ATMEL_FLEXCOM_MODE_TWI”。
+相关头文件里定义：
+#ifndef __DT_BINDINGS_ATMEL_FLEXCOM_H__
+#define __DT_BINDINGS_ATMEL_FLEXCOM_H__
+
+#define ATMEL_FLEXCOM_MODE_USART	1
+#define ATMEL_FLEXCOM_MODE_SPI		2
+#define ATMEL_FLEXCOM_MODE_TWI		3
+
+#endif /* __DT_BINDINGS_ATMEL_FLEXCOM_H__ */
+iii. 添加i2c3的定义，如下图所示。请参见i2c2（flexcom4）的定义
+iv. uart5使用相同的引脚，因此请注释掉uart5的整个定义，或者通过将状态更改为“禁
+止”来将其禁止。
+flx0: flexcom@f8034000 {
+atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_TWI>;
+status = "okay"; /* conflict with ISC_D2 & ISC_D3 data pins */
+i2c3: i2c@600 {
+compatible = "atmel,sama5d2-i2c";
+reg = <0x600 0x200>;
+interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+dmas = <0>, <0>;
+dma-names = "tx", "rx";
+#address-cells = <1>;
+#size-cells = <0>;
+clocks = <&flx0_clk>;
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_flx0_default>;
+atmel,fifo-size = <16>;
+status = "okay";
+};
+uart5: serial@200 {
+compatible = "atmel,at91sam9260-usart";
+reg = <0x200 0x200>;
+interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+clocks = <&flx0_clk>;
+clock-names = "usart";
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_flx0_default>;
+atmel,fifo-size = <32>;
+status = "disabled";
+};
+};
+v. 请注意其中的“conflict with ISC_D2 & ISC_D3 data pins”。我们来确保ISC已禁
+止。在dtsi文件中搜索“isc”。
+	isc: isc@f0008000 {
+				compatible = "atmel,sama5d2-isc";
+				reg = <0xf0008000 0x4000>;
+				interrupts = <46 IRQ_TYPE_LEVEL_HIGH 5>;
+				clocks = <&isc_clk>, <&iscck>, <&isc_gclk>;
+				clock-names = "hclock", "iscck", "gck";
+				#clock-cells = <0>;
+				clock-output-names = "isc-mck";
+				status = "disabled";
+			};
+vi. 接下来，我们来看一下flexcom0引脚的定义：
+pinctrl_flx0_default: flx0_default {
+					pinmux = <PIN_PB28__FLEXCOM0_IO0>,
+						 <PIN_PB29__FLEXCOM0_IO1>;
+					bias-disable;
+				};
+由于PB28和PB29引脚用于I2C功能，因此需要使内部上拉功能可用。这通过将flx0引脚
+pinctrl_flx0_default: flx0_default {
+					pinmux = <PIN_PB28__FLEXCOM0_IO0>,
+						 <PIN_PB29__FLEXCOM0_IO1>;
+					bias-pull-up;
+
+				};
+在目标串行终端中输入“i2cdetect 0”。您应看到一个输出，如下图所
+示：
+ 
+0x4f I2C器件为新器件，即温度传感器
+我们需要将此新I2C设备添加到设备树中。要为设备添加支持，我们不仅要更改设备树条目，还要确保驱动程序可用于为设备提供服务。
+先集成相关驱动程序，要使“lm75.c”驱动程序适合我们的I2C设备（0x4f），我们需要添加包含兼容字符串“lm75”的设备树条目。
+flx0: flexcom@f8034000 {
+atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_TWI>;
+status = "okay"; /* conflict with ISC_D2 & ISC_D3 data pins */
+i2c3: i2c@600 {
+compatible = "atmel,sama5d2-i2c";
+reg = <0x600 0x200>;
+interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+dmas = <0>, <0>;
+dma-names = "tx", "rx";
+#address-cells = <1>;
+#size-cells = <0>;
+clocks = <&flx0_clk>;
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_flx0_default>;
+atmel,fifo-size = <16>;
+status = "okay";
+lm75: lm75@4f {
+compatible = "lm75";
+reg = <0x4f>;
+};
+};
+
+uart5: serial@200 {
+compatible = "atmel,at91sam9260-usart";
+reg = <0x200 0x200>;
+interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+clocks = <&flx0_clk>;
+clock-names = "usart";
+pinctrl-names = "default";
+pinctrl-0 = <&pinctrl_flx0_default>;
+atmel,fifo-size = <32>;
+status = "disabled";
+};
+}
+要在目标内核中包含lm75的驱动程序，必须使用menuconfig配置内核。
+通过/sys/class/gpio/接口，可从用户空间访问GPIOS。利用此方法切换连接到IO1 Xplained板的LED。/sys/kernel/debug/pinctrl/fc038000.pinctrl/”中的文件“pinmux-pins”包含目标上所有硬件引脚的引脚复用信息。通过此文件，我们可检查硬件引脚是用作外设还是GPIO。Fc038000来源于dts:
+	pinctrl@fc038000 {
+				/*
+				 * There is no real pinmux for ADC, if the pin
+				 * is not requested by another peripheral then
+				 * the muxing is done when channel is enabled.
+				 * Requesting pins for ADC is GPIO is
+				 * encouraged to prevent conflicts and to
+				 * disable bias in order to be in the same
+				 * state when the pin is not muxed to the adc.
+				 */
+				pinctrl_adc_default: adc_default {
+					pinmux = <PIN_PD23__GPIO>;
+					bias-disable;
+				};
+root@sama5d2_xplained:~# echo 37 > /sys/class/gpio/export
+root@sama5d2_xplained:~# echo out > /sys/class/gpio/PB5/direction
+root@sama5d2_xplained:~# echo 1 > /sys/class/gpio/PB5/value
+root@sama5d2_xplained:~# echo 0 > /sys/class/gpio/PB5/value
+上述命令将执行以下功能：
+- 引脚37保留以供用户空间使用。
+- 然后将其配置为输出引脚，以便可驱动LED。
+- 可通过向其值文件写入“1”或“0”来将引脚驱动为高电平或低电平。
+i2cdetect是来自 i2c工具套件的工具。它能够从用户空间探测 i2c总线并报告使用
+的地址。您必须指定要探测的总线编号
