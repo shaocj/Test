@@ -82,3 +82,40 @@ Memory Configration：内存配置 (（4M*16*4banks）*2Chips )
 
 4、由两片K4S561632C组合在一起的,这样做的效果是什么？
 我们已经知道1片K4S561632C有4个bank,两片K4S561632C就有8个bank了,当连接一个K4S561632C时,一个地址对应2个字节,现在连接了两片K4S561632C那么,一个地址就对应4个字节了,即一个字,总共64MB,当一个地址存放1个字节,我们需要64Mbit个地址才能达到64MB的容量,现在容量不变,每个地址里存放的字节数增多了,那么必然需要的地址数就减少了,根据存储容量（BYTE）=地址数*每个地址能存的字节数,可知当每个地址里存放的字节数增大4倍时,我们的地址数会变为原来的1/4, 当一个地址存放4个字节,我们只需要16Mbit个地址就能达到64MB的容量,16Mbit代表24根地址线(2^24=16Mbit=16*1024*1024)
+MEMCONTROL里面有个num_chip，使用了几个CS信号。两个DDR控制器只用了一个CS0，对于210来说就是一片，所以设置为 0x0 = 1 chip
+然后 MEMCONTROL的mem_width，设为 0x2 = 32-bit 。
+MEMCONFIG0和MEMCONFIG1是一样的，一个设置相应控制器的CS0，一个设置CS1。
+ 
+这两个寄存器合起来，可以决定DMC0/DMC1 CS0和CS1下挂着的内存对应哪一段内存地址。我理解的是当你要放问地址0x21xx_xxxx的地址的时候，DMC0会将访问地址的高8bits 0x21和chip_mask求与，要是等于chip_base，他就会使用相应的控制器的相应的片选去读数据。就像假如
+DMC0_MEMCONFIG0   chip_base =  0x20      chip_mask=0xf8
+DMC0_MEMCONFIG1   chip_base =  0x28      chip_mask=0xf8
+当你要访问的地址是 0x22xx_xxxx的时候，  （0x22 & 0xf8） ==  0x20，所以使用CS0
+那要是  0x2exx_xxxx呢？     （0x2e & 0xf8） == 0x28 ，当然使用CS1了。
+也就是说CS0对应的是 0x2000_0000 ~ 0x27ff_ffff，128M
+CS1对应的是 0x2800_0000 ~ 0x28ff_ffff，128M
+同样的每个CS下都是256M呢？
+DMC0_MEMCONFIG0   chip_base =  0x20      chip_mask=0xf0          // 0x2000_0000 ~ 0x2fff_ffff     256M
+DMC0_MEMCONFIG1   chip_base =  0x30      chip_mask=0xf0          // 0x3000_0000 ~ 0x3fff_ffff     256M
+DMC0和DMC1配置一样，但是DMC0只能配置为0x2000_0000~0x3fff_ffff的空间，DMC1只能配置为0x4000_0000~0x5fff_ffff的空间。这是DMC的地址空间决定的，我就是在这郁闷了两天。
+我的板子上面DMC0和DMC1上都只使用了CS0,然后我的设置就是
+DMC0_MEMCONFIG0   chip_base =  0x20      chip_mask=0xf0          // 0x2000_0000 ~ 0x2fff_ffff     256M
+DMC1_MEMCONFIG0   chip_base =  0x40      chip_mask=0xf0          // 0x4000_0000 ~ 0x4fff_ffff     256M  注意，DMC1只能从0x4000_0000开始。
+问题又来了，这样内存地址空间不就不连续了嘛？
+内存的地址空间不从0x2000_0000开始，从0x3000_0000开始，不就正好接上DMC1的了。只是CONFIG_SYS_SDRAM_BASE和CONFIG_SYS_TEXT_BASE相应的改一下：
+DMC0_MEMCONFIG0   chip_base =  0x30      chip_mask=0xf0          // 0x3000_0000 ~ 0x3fff_ffff     256M
+DMC1_MEMCONFIG0   chip_base =  0x40      chip_mask=0xf0          // 0x4000_0000 ~ 0x4fff_ffff     256M
+ 
+难点：关于地址映射
+如果设置chip_base为0x20：
+(1)我们挂载的内存为128M，那么这个chip_mask应该设置为0xF8
+(2)我们挂载256M内存时，chip_mask应该设置为0xF0
+(3)我们挂载512M时，chip_mask应该设置为0xE0
+(4)我们挂载1GB内存时，chip_mask就应该设置为0xC0。
+以DMC0为例，当DMC0接收到来自AXI的0x2000,0000~0x3fff,ffff内的地址时，会作如下处理：
+(1)将AXI地址的高8位与chip_mask相与得到结果，记为X。
+(2)将X分别与MEMCONFIG0和MEMCONFIG1的chip_base相比较，如果相等，则打开相应的片选。
+假如挂载的内存为128M，且CS0和CS1上分别挂了一片，那么128M=128*1024*1024=0x8000000，则128M内存的偏移范围应该是0x0000,0000~0x07ff,ffff，高位剩余5位，那么，我们把MEMCONFIG0的chip_base设置为0x20，chip_mask设置为0xF8，为了保持内存连续，则需要将MEMCONFIG1的chip_base设置为0x28，chip_mask设置为0xF8，当AXI发来的地址为0x23xx,xxxx时，0x23&0xF8得到0x20，所以，会打开片选CS0，当AXI发来的地址为0x28xx,xxxx时，0x28&0xF8得到0x28，所以，会打开片选CS1，依此类推。
+特别的，当载在的内存芯片为8bank（8bank内存芯片一般为14/15行地址，10列地址，即容量一般为512M或者1G）时，由于CS1为bank2引脚，为了保持CS0时钟处于片选状态，对于512M内存来讲需要将chip_mask设置为0xE0，这是因为512M=512*1024*1024=0x2000,0000，也就是说，512M内存的偏移应该为0x0000,0000~0x1fff,ffff，所以高位剩余3位，即0xE0，当然了，如果内存为1G=1024*1024*1024=0x4000,0000，即偏移为0x0000,0000~0x3fff,ffff，高位剩余2为，故设置chip_mask为0xC0。这样，就会计算偏移这两个值了。
+http://blog.chinaunix.net/uid-122754-id-3144920.html
+http://www.cnblogs.com/Efronc/archive/2012/03/01/2375578.html
+
