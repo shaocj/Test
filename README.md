@@ -119,3 +119,14 @@ DMC1_MEMCONFIG0   chip_base =  0x40      chip_mask=0xf0          // 0x4000_0000 
 http://blog.chinaunix.net/uid-122754-id-3144920.html
 http://www.cnblogs.com/Efronc/archive/2012/03/01/2375578.html
 
+https://blog.csdn.net/a_chinese_man/article/details/73381338
+https://blog.csdn.net/eshing/article/details/37542877
+https://blog.csdn.net/eshing/article/details/37565901
+https://blog.csdn.net/eshing/article/details/37566293
+https://blog.csdn.net/eshing/article/details/37567337
+https://blog.csdn.net/eshing/article/details/37567541
+https://blog.csdn.net/eshing/article/details/37567687
+https://blog.csdn.net/eshing/article/details/37567771
+https://blog.csdn.net/eshing/article/details/37567923
+https://blog.csdn.net/eshing/article/details/37567953
+https://blog.csdn.net/lightsoure/article/details/5900500
