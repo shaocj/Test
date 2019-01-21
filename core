@@ -1,0 +1,25 @@
+Why do I get Cannot load image, XCore 0 is not enabled?
+When bringing up a new board design or during production test the following
+error my be returned from xrun: Cannot load image, XCore 0 is not enabled.
+This error message means that the XTAG or XTAG2 JTAG debug adapter can
+access the JTAG tap on the device, but cannot access the XCore tap on the
+device.
+There are many reasons why this may be the case including:
+1. The JTAG interface to the XCore has been disabled in the OTP security
+register.
+2. The device is being permanently held in reset by the RST_N signal.
+3. No clock is being supplied to the device; or the clock frequency
+supplied to the device is unsuitable for the selected PLL multiplier. The
+PLL multiplier is set using the MODE pins and should be configured so that
+the XCore boots up at or below its maximum frequency. Further details on
+the MODE pins can be found in the relevant device datasheet.
+4. The VDD Core supply is outside of tolerance (see the device datasheet).
+5. The VDD PLL supply is outside of tolerance (see the device datasheet) or
+not present, or has a filter with too high a resistor. This will mean that
+the PLL is not locked and hence the XCore will be kept in reset.
+6. The power supplies have not been correctly sequenced. The VDDIO (and
+OTP_VDDIO if present) supply must be within specification (3.0V-3.6V)
+before the VDD Core supply is turned on; see the datasheet for details.
+7. The device, especially the ground paddle, has not been correctly
+soldered to the board. This can either be in the form of not connected
+solder joints or shorted solder joints to other pins, ground or power.
