@@ -1,0 +1,22 @@
+动态音频电源管理的意思，DAPM是为了使基于Linux的移动设备上的音频子系统，在任何时候都工作在最小功耗状态下。DAPM对用户空间的应用程序来说是透明的，所有与电源相关的开关都在ASoc core中完成。用户空间的应用程序无需对代码做出修改，也无需重新编译，DAPM根据当前激活的音频流（playback/capture）和声卡中的mixer等的配置来决定那些音频控件的电源开关被打开或关闭。
+	一个kcontrol代表着一个mixer（混音器），或者是一个mux（多路开关），又或者是一个音量控制器等等。 从上述文章中我们知道，定义一个kcontrol主要就是定义一个snd_kcontrol_new结构. 对于每个控件，我们需要定义一个和他对应的snd_kcontrol_new结构，这些snd_kcontrol_new结构会在声卡的初始化阶段，通过snd_soc_add_codec_controls函数注册到系统中.
+	们会为mixer的每个输入端都单独定义一个简单控件来控制该路输入的开启和关闭，反应在代码上，就是定义一个soc_kcontrol_new数组。
+	mux控件与mixer控件类似，也是多个输入端和一个输出端的组合控件，与mixer控件不同的是，mux控件的多个输入端同时只能有一个被选中。因此，mux控件所对应的寄存器，通常可以设定一段连续的数值，每个不同的数值对应不同的输入端被打开，与上述的mixer控件不同，ASoc用soc_enum结构来描述mux控件的寄存器信息。
+	kcontrol。利用kcontrol，我们可以完成对音频系统中的mixer，mux，音量控制，音效控制，以及各种开关量的控制，通过对各种kcontrol的控制，使得音频硬件能够按照我们预想的结果进行工作
+	kcontrol还是有以下几点不足：
+•	只能描述自身，无法描述各个kcontrol之间的连接关系；
+•	没有相应的电源管理机制；
+•	没有相应的时间处理机制来响应播放、停止、上电、下电等音频事件；
+•	为了防止pop-pop声，需要用户程序关注各个kcontrol上电和下电的顺序；
+•	当一个音频路径不再有效时，不能自动关闭该路径上的所有的kcontrol；
+DAPM框架为了解决这些问题，引入了widget这一概念, 在DAPM框架中，把各种不同的widget分为不同的种类，snd_soc_dapm_widget结构中的id字段用来表示该widget的种类.
+一个widget是有输入和输出的，而且widget之间是可以动态地进行连接的，那它们是用什么来连接两个widget的呢？DAPM为我们提出了path这一概念，path相当于电路中的一根跳线，它把一个widget的输出端和另一个widget的输入端连接在一起，path用snd_soc_dapm_path结构来描述, 连接的路径是这样的：起始端widget的输出-->path的输入-->path的输出-->到达端widget输入。一个路径的连接至少包含以下几个元素：起始端widget，跳线path，到达端widget，在DAPM中，用snd_soc_dapm_route结构来描述这样一个连接关系. 该结构的意义很明显就是：source通过一个kcontrol，和sink连接在一起，现在是否处于连接状态，请调用connected回调函数检查。
+所有定义好的route，最后都要注册到dapm系统中，dapm会根据这些名字找出相应的widget，并动态地生成所需要的snd_soc_dapm_path结构，正确地处理各个链表和指针的关系，实现两个widget之间的连接. 其中snd_soc_dapm_path无需我们自己定义，它会在注册snd_soc_dapm_route时动态地生成，但是对于系统中的widget和route，我们是需要自己进行定义的，另外，widget所包含的kcontrol与普通的kcontrol有所不同，它们的定义方法与标准的kcontrol也有所不同。
+根据widget的类型，按照它们的电源所在的域，被分为了几个域，他们分别是：
+•	codec域     比如VREF和VMID等提供参考电压的widget，这些widget通常在codec的probe/remove回调中进行控制，当然，在工作中如果没有音频流时，也可以适当地进行控制它们的开启与关闭。
+•	platform域    位于该域上的widget通常是针对平台或板子的一些需要物理连接的输入/输出接口，例如耳机、扬声器、麦克风，因为这些接口在每块板子上都可能不一样，所以通常它们是在machine驱动中进行定义和控制，并且也可以由用户空间的应用程序通过某种方式来控制它们的打开和关闭。
+•	音频路径域    一般是指codec内部的mixer、mux等控制音频路径的widget，这些widget可以根据用户空间的设定连接关系，自动设定他们的电源状态。
+•	音频数据流域    是指那些需要处理音频数据流的widget，例如ADC、DAC等等。
+每个codec有多个dai，而cpu（通常就是指某个soc cpu芯片）也会有多个dai，dai注册时，dapm系统会为每个dai创建一个snd_soc_dapm_dai_in或snd_soc_dapm_dai_out类型的widget，通常，这两种widget会和codec中具有相同的stream name的widget进行连接。dapm利用这些kcontrol完成音频路径的控制。不过，对于widget来说，它的任务还不止这些，dapm还要动态地管理这些音频路径的连结关系，以便可以根据这些连接关系来控制这些widget的电源状态..
+
+
