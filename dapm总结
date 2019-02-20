@@ -71,3 +71,19 @@ dapm要给一个widget上电的其中一个前提条件是：这个widget位于�
 •	驱动程序在改变了某个widget并把它加入到dapm_dirty链表后，主动调用snd_soc_dapm_sync函数触发扫描操作。
 dapm框架中的另一个机制：事件机制。通过dapm事件机制，widget可以对它所关心的dapm事件做出反应，这种机制对于扩充widget的能力非常有用，例如，对于那些位于codec之外的widget，好像喇叭功放、外部的前置放大器等等，由于不是使用codec内部的寄存器进行电源控制，我们就必须利用dapm的事件机制，获得相应的上下电事件，从而可以定制widget自身的电源控制功能。
 在所有需要处理电源变化的widget被分别放入up_list和down_list链表后，会相应地发出各种dapm事件, 由此可见，dai widget和stream widget是通过stream name进行匹配的，所以，我们在定义codec的stream widget时，它们的stream name必须要包含dai的stream name，这样才能让ASoc自动把这两种widget连接在一起，只有把它们连接在一起，ASoc中的播放、录音和停止等事件，才能通过dai widget传递到codec中，使得codec中的widget能根据目前的播放状态，动态地开启或关闭音频路径上所有widget的电源。
+ ASoC 硬件设备驱动的三大构成：Codec、Platform 和 Machine，下面列举各驱动的功能构成：
+ASoC Codec Driver：
+•	Codec DAI 和 PCM 的配置信息
+•	Codec 的控制接口，如 I2C/SPI
+•	Mixer 和其他音频控件
+•	Codec 的音频接口函数，见 snd_soc_dai_ops 结构体定义
+•	DAPM 描述信息
+•	DAPM 事件处理句柄
+•	DAC 数字静音控制
+ASoC Platform Driver： 包括 dma 和 cpu_dai 两部分：
+•	dma 驱动实现音频 dma 操作，具体见 snd_pcm_ops 结构体定义
+•	cpu_dai 驱动实现音频数字接口控制器的描述和配置
+ASoC Machine Driver：
+•	作为链结 Platform 和 Codec 的载体，它必须配置 dai_link 为音频数据链路指定 Platform 和 Codec
+•	处理机器特有的音频控件和音频事件，例如回放时打开外放功放
+
