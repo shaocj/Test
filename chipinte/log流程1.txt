@@ -1,0 +1,93 @@
+﻿
+0xb:RTOS
+VAD[0]
+0xc:RTOS
+VAD[2]
+DNN[900:ms]
+send result:小美小美 0.451294
+SCJ1send result:小美小美 0.451294
+SCJ进入识别模式...
+
+[aa 12 fa 00 00 00 00 00 00 fa a1 02 00 00 00 00 00 00 57 ]
+play task index =1
+play voice size 12288
+iisctrl-0x10000
+scj##3
+SCJ以唤醒play times:2140 ms
+0xd:RTOS
+[3311 ]play done
+0xe:RTOS
+VAD[0]
+feed IWDG ...
+0xf:RTOS
+VAD[2]
+DNN[820:ms]
+send result:打开风扇 0.538635
+SCJ1send result:打开风扇 0.538635
+SCJSCJ已唤醒打开SCJ已唤醒打开123SCJ已唤醒打开12play task index =2
+play voice size 20480
+iisctrl-0x10000
+play times:3220 ms
+SCJ以唤醒
+@@@@@@20[aa 1e fa 00 00 00 00 00 00 02 00 00 04 02 03 00 43 00 00 00 00 00 00 28 00 ff 00 02 21 00 50 ]
+0x10:RTOS
+[4070 ]play done
+0x11:RTOS
+0x12:RTOS
+VAD[0]
+VAD[2]
+DNN[830:ms]
+send result:小美小美 0.539001
+SCJ1send result:小美小美 0.539001
+SCJSCJ已唤醒打开
+[aa 12 fa 00 00 00 00 00 00 fa a1 02 00 00 00 00 00 00 57 ]
+SCJ已唤醒打开123SCJ已唤醒打开12play task index =1
+play voice size 12288
+iisctrl-0x10000
+play times:2140 ms
+SCJ以唤醒0x13:RTOS
+[4814 ]play done
+0x14:RTOS
+0x15:RTOS
+VAD[0]
+VAD[2]
+DNN[950:ms]
+send result:增大音量 0.394592
+SCJ1send result:增大音量 0.394592
+SCJSCJ已唤醒打开SCJ已唤醒打开123@write spi zone 2 crc=ae2fa9af
+@@@@@@@@deal_volume_control,149,61
+play task index =88
+play voice size 8192
+iisctrl-0x10000
+play times:1600 ms
+SCJ以唤醒
+@@@@@@20[aa 1e fa 00 00 00 00 00 00 02 00 00 04 02 00 00 43 00 00 00 00 00 00 28 00 ff 00 02 21 00 53 ]
+0x16:RTOS
+[5542 ]play done
+0x17:RTOS
+0x18:RTOS
+0x19:RTOS
+0x1a:RTOS
+0x1b:RTOS
+scj000
+go away from wakeup
+play task index =0
+play voice size 24576
+iisctrl-0x10000
+play times:3720 ms
+scj调用
+
+[aa 12 fa 00 00 00 00 00 00 fa a1 03 00 00 00 00 00 00 56 ]
+0x1c:RTOS
+[7153 ]play done
+0x1d:RTOS
+VAD[0]
+feed IWDG ...
+0x1e:RTOS
+VAD[2]
+DNN[870:ms]
+send result:增大音量 0.419739
+SCJ1send result:增大音量 0.419739
+SCJSCJ已唤醒打开12345如需进入识别模式,请说唤醒词
+0x1f:RTOS
+0x20:RTOS

@@ -1,0 +1,175 @@
+0xc:RTOS
+ceid =85 60 17
+[STDSPI]
+PlayVoice_Infor.PlayVoice_Header is 0x70698808
+@nvdata_write_flag zone 1 after write err by crc=3ec66a87, retry_times = 0
+@nvdata_write_flag zone 1 after write err by crc=3ec66a87, retry_times = 1
+@nvdata_write_flag zone 1 after write err by crc=3ec66a87, retry_times = 2
+no valid data on flag zone. set to defalut val
+zone 1, crc_calc=e2b03c14,nvdata_save.crc=ffffffff
+@read spi zone 2  crc=d14121a3
+
+ enter 8388 init 
+8388 reg0x17=24
+SCJ777
+IWDG TIME: 30 sec
+
+
+ci100x_sdk_release_1.6.0 Built-in
+UserVer_Midea_FAN_1.2 Built-in
+Welcome to ci100x_sdk.
+<<MODEL_V1>>
+低功耗信号量创建成功 :20007808
+VADPCM信号量创建成功 :20007868
+文件保护互斥信号量创建成功 :200078c8
+识别队列创建成功 :20007f88 
+VAD 语音队列创建成功 :200087e8 
+唤醒机制互斥锁 :20008860
+tf REC复位信号量创建成功 :200088c0
+tf xRecStopSemaphore create success :20008920
+tf REC 4k信号量创建成功 :20008980
+scj##2
+模型句柄创建成功:handle = 70699b48
+
+
+---------1115 ASR_BEAM=9.000000  skip  ----------
+
+[528699236765127]
+asrStart成功!
+arc_nums is :5610, note_nums is:2657
+Version is :CIKD.RELEASE.0.7.2
+
+beam is :9.000000
+min_active is :500 ,max_active is :5000
+[ play task index error]
+scj
+0:RTOS
+VAD[0]
+VAD[2]
+DNN[280:ms]
+VAD[0]
+0x1:RTOS
+VAD[2]
+DNN[950:ms]
+send result:小美小美 0.507935
+SCJ1send result:小美小美 0.507935
+SCJ进入识别模式...
+
+[aa 12 fa 00 00 00 00 00 00 fa a1 02 00 00 00 00 00 00 57 ]
+play task index =1
+play voice size 12288
+iisctrl-0x10000
+scj##3
+play times:2140 ms
+0x2:RTOS
+[548 ]play done
+0x3:RTOS
+VAD[0]
+VAD[2]
+DNN[830:ms]
+send result:打开风扇 0.509521
+SCJ1send result:打开风扇 0.509521
+SCJplay task index =2
+play voice size 20480
+iisctrl-0x10000
+play times:3220 ms
+
+@@@@@@20[aa 1e fa 00 00 00 00 00 00 02 00 00 04 02 03 00 43 00 00 00 00 00 00 28 00 ff 00 02 21 00 50 ]
+0x4:RTOS
+0x5:RTOS
+[1291 ]play done
+0x6:RTOS
+VAD[0]
+VAD[2]
+DNN[840:ms]
+send result:小美小美 0.557251
+SCJ1send result:小美小美 0.557251
+SCJ
+[aa 12 fa 00 00 00 00 00 00 fa a1 02 00 00 00 00 00 00 57 ]
+play task index =1
+play voice size 12288
+iisctrl-0x10000
+play times:2140 ms
+0x7:RTOS
+[1798 ]play done
+0x8:RTOS
+0x9:RTOS
+VAD[0]
+0xa:RTOS
+VAD[2]
+DNN[940:ms]
+send result:增大音量 0.459900
+SCJ1send result:增大音量 0.459900
+SCJ@write spi zone 1 crc=9198eda9
+@@@@@@@@deal_volume_control,149,61
+play task index =88
+play voice size 8192
+iisctrl-0x10000
+play times:1600 ms
+
+@@@@@@20[aa 1e fa 00 00 00 00 00 00 02 00 00 04 02 00 00 43 00 00 00 00 00 00 28 00 ff 00 02 21 00 53 ]
+[2635 ]play done
+0xb:RTOS
+VAD[0]
+VAD[2]
+DNN[890:ms]
+send result:减小音量 0.348877
+SCJ1send result:减小音量 0.348877
+SCJ@write spi zone 2 crc=d14121a3
+@@@@@@@@deal_volume_control,149,62
+play task index =89
+play voice size 8192
+iisctrl-0x10000
+play times:1600 ms
+
+@@@@@@20[aa 1e fa 00 00 00 00 00 00 02 00 00 04 02 00 00 43 00 00 00 00 00 00 28 00 ff 00 02 21 00 53 ]
+0xc:RTOS
+[3026 ]play done
+0xd:RTOS
+0xe:RTOS
+feed IWDG ...
+0xf:RTOS
+0x10:RTOS
+0x11:RTOS
+scj000
+go away from wakeup
+play task index =0
+play voice size 24576
+iisctrl-0x10000
+play times:3720 ms
+scj调用
+
+[aa 12 fa 00 00 00 00 00 00 fa a1 03 00 00 00 00 00 00 56 ]
+0x12:RTOS
+[4636 ]play done
+0x13:RTOS
+VAD[0]
+0x14:RTOS
+VAD[2]
+DNN[280:ms]
+0x15:RTOS
+0x16:RTOS
+VAD[0]
+VAD[2]
+DNN[960:ms]
+send result:增大音量 0.413025
+SCJ1send result:增大音量 0.413025
+SCJ如需进入识别模式,请说唤醒词
+0x17:RTOS
+0x18:RTOS
+VAD[0]
+VAD[2]
+DNN[300:ms]
+0x19:RTOS
+VAD[0]
+VAD[2]
+DNN[350:ms]
+VAD[0]
+0x1a:RTOS
+VAD[2]
+DNN[1320:ms]
+send result:厦门 0.295166
+SCJ1SCJ20x1b:RTOS
+
+Error writing data to serial port:
+  Éè±¸²»Ê¶±ð´ËÃ
