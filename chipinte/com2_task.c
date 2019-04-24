@@ -197,7 +197,6 @@ void uart2_send_AsrResult(int index,int status)
 		 pasrcmd->powerEnable = 0;
 		 pasrcmd->workMode = 1;
 		 pasrcmd->powerOnOff = 1;
-		 nvdata_save.voice_onoff = 1;
 		 if(g_current_shake == 1)
 		   {
 			 pasrcmd->shakeEnable = 0;
@@ -207,7 +206,6 @@ void uart2_send_AsrResult(int index,int status)
 	 case 3://风扇关机
 		 pasrcmd->powerEnable = 0;
 		 pasrcmd->powerOnOff = 0;
-	 	 nvdata_save.voice_onoff = 0;
 		 break;
 	 case 4://风扇摇头
 	 	if(nvdata_save.voice_onoff == 1)

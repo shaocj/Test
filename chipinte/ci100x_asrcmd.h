@@ -64,9 +64,9 @@ extern char* expected_words_lst[];
 //---------------------------------------------------------------------------
 // Define
 //---------------------------------------------------------------------------
-#define VOLUME_OPEN_COMMAND_INDEX  (84)
+#define VOLUME_OPEN_COMMAND_INDEX  (2)
 
-#define VOLUME_CLOSE_COMMAND_INDEX  (85)
+#define VOLUME_CLOSE_COMMAND_INDEX  (3)
 
 #define VOLUME_UP_COMMAND_INDEX  (80)
 

@@ -383,7 +383,7 @@ void userapp_deal_asr_msg(sys_asr_msg_data_t *asr_msg)
         #if USE_USER_UART
         if(awaken)
         {
-        	//if(function_index > 1)
+        	if(function_index > 1)
             	uart2_send_AsrResult(function_index,0);
         }
         #endif
@@ -514,7 +514,7 @@ void Asr_Playback(int function_index)
         
         awaken = 1;
         mprintf("进入识别模式...\n");
-		//uart2_send_AwakeState(2);
+		uart2_send_AwakeState(2);
         send_play_by_func_index(function_index);
     }
     else
@@ -522,12 +522,12 @@ void Asr_Playback(int function_index)
         if(1==awaken)
         {     
             //唤醒状态下再次唤醒，也发数据。可能会删除
-            /*
+            
             if(check_wakeup(function_index) == true)
             {
             	uart2_send_AwakeState(2);
             }
-            */
+           
             if((nvdata_save.voice_onoff ==0)&&(function_index == VOLUME_OPEN_COMMAND_INDEX))
             {
                 nvdata_save.voice_onoff  = 1;
@@ -551,8 +551,6 @@ void Asr_Playback(int function_index)
 				if(deal_volume_control(function_index) == -1)
                 {
 					
-					if((nvdata_save.voice_onoff == 1) || (function_index == 2) || (function_index == 1))
-                	{ 
                 		if((g_current_gear == 1) && (function_index == 6))
                 		{
 							xQueueSend(play_Q, index+1,200);
@@ -565,9 +563,7 @@ void Asr_Playback(int function_index)
 	                    {
 	                        mprintf("send err %s,%d\n",__FUNCTION__,__LINE__);
 	                    }
-                	}
-					else
-						xQueueSend(play_Q, index,200);//关机状态下，控制命令播报请先开机
+                	
 						
                 }
                 
@@ -582,6 +578,8 @@ void Asr_Playback(int function_index)
                         mprintf("send err %s,%d\n",__FUNCTION__,__LINE__);
                     }                    
                 }
+				else
+					xQueueSend(play_Q, index,200);//关机状态下，控制命令播报请先开机
             }    
         }
         else
