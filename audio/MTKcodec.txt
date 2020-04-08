@@ -1,0 +1,42 @@
+https://blog.csdn.net/jiangjingui2011/article/details/6797280
+
+
+mtk 添加audio codec芯片注意事项
+原创jiangjingui2011 最后发布于2011-09-21 15:16:05 阅读数 4155  收藏
+展开
+?
+
+按mtk正常流程，codec 的init只会在AFE2.c 中的AFE_Init 函数通过EXT_DAC_INIT函数进行初始化，之后对播放音乐及声音操作会通过EXT_DAC_TRUNON/OFF SEPEAKER
+
+进行操作。不会再走EXT_DAC_INIT中对codec 的init部分代码。
+
+?
+
+正常播放音乐的时候， mtk 原始的调用流程是，SET playback rate－－> turnon speaker 通路? －－－－> 开启edi（i2s） －－－>设置音量 输出音乐。
+
+?
+
+由于手机待机需要进入低功耗，所以，针对带有codec 芯片的机种需要将 codec芯片 设置为睡眠模式，以防codec chip 耗电。一般常规做法是关闭codec 内部电压并将BB供给codec的clk信号切断。
+
+?
+
+当手机退出待机模式，需要重新给codec提供clk 以及其他操作，这部分的代码 放在turnon speaker通路中会对当前codec chip的模式进行判断看是否需要重新对chip进行初始化。
+
+?
+
+那回到mtk正常的播放音乐流程，? 由于set playback rate 是在turnon speaker 通路之前调用的，此时codec chip 还处于睡眠模式，所以设置无效并且当刚从睡眠模式退出时， turnon speaker通路中的init代码会重新设置codec chip默认的playback rate。
+
+?
+
+如果当前播放的音乐的playback rate 和 codec chip 默认的playback rate 不一样的话，问题来了，从睡眠模式退出播放的第一首歌曲就有问题了，因为采用了不对的playback rate参数导致，听到的音乐就会有杂音。
+
+?
+
+?
+
+针对这个问题，最快的做法是将设置playback rate的位置换到turnspeaker 通路之后，这样可以保证设置的playback rate 都是对的。
+
+?
+————————————————
+版权声明：本文为CSDN博主「jiangjingui2011」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/jiangjingui2011/article/details/6797280
