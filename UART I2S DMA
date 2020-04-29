@@ -1,0 +1,109 @@
+uart中断模式配置：
+1、NVIC配置uart_irq
+    NVIC_InitStruct.NVIC_IRQChannel = (UARTx == UART0)?UART0_IRQn:UART1_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStruct);
+2、设置Uart时钟开关、配置管脚复用
+2、uart使能关闭
+3、uart信号发送和接收使能控制
+4、uart波特率配置
+5、设置uart发送FIFO数据位宽（以字节或者word方式，这里是字节）
+6、UART数据位、停止位、奇偶校验位设置
+7、UART接收和发送FIFO触发深度配置
+uart 查询模式配置：
+1、设置Uart时钟开关、配置管脚复用
+2、uart使能关闭
+3、uart信号发送和接收使能控制
+4、uart波特率配置
+10、清除uart中断标志
+11、uart中断屏蔽使能
+5、设置uart发送FIFO数据位宽（以字节或者word方式，这里是字节）
+6、UART数据位、停止位、奇偶校验位设置
+7、UART接收和发送FIFO触发深度配置
+10、uart fifo清除
+11、uart nced信号使能
+12、uart中断发送位屏蔽使能、接收位不屏蔽
+12、uart使能
+
+UART DMA模式配置：
+1、NVIC配置为DMA_IRQ
+2、使能DMA时钟和Uart时钟开关
+3、配置管脚复用
+4、uart使能关闭
+5、uart信号发送和接收使能控制
+   UART_CRConfig(UARTx,UART_TXE,ENABLE);
+    UART_CRConfig(UARTx,UART_RXE,ENABLE);
+6、uart波特率配置（921600）
+7、设置uart发送FIFO数据位宽（以字节或者word方式，这里是字）
+8、UART数据位、停止位、奇偶校验位设置
+9、UART接收和发送FIFO触发深度配置
+10、清除uart中断标志
+11、uart中断屏蔽使能
+12、uart fifo清除
+13、uart nced信号使能
+14、uart 接收发送dma控制使能
+15、uart使能
+
+DMA配置：
+1、NVIC配置为DMA_IRQ
+    NVIC_InitStruct.NVIC_IRQChannel = DMA_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 6;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStruct);
+2、使能DMA时钟开关
+3、禁止DMA通道传输并且打开DMA通道传输Power
+4、清除DMA通道传输完成中断状态
+5、清除DMA通道传输错误中断状态
+6、DMA控制器AHB MASTER字节端序的配置（大端或小端）
+7、DMA控制器使能
+8、DMA通道源地址和目标地址设置
+9、通道保护位设置（用户模式or特权模式；缓冲是否使能；缓存是否使能）
+10、通道源的相关配置（源地址不增长or增长，源搬运使用的DMA接口；元传输数据的位宽、源突发传输的大小）
+11、通道目标的相关配置（源地址不增长or增长，源搬运使用的DMA接口；元传输数据的位宽、源突发传输的大小）
+12、DMA通道传输大小配置
+13、关闭DMA通道传输中的halt
+14、DMA通道中断屏蔽配置（传输完成中断不屏蔽，传输错误中断屏蔽）
+15、其他设置（流控类型选择：是从内存到外设还是外设到外设还是内存到内存，目标外设、元外设）
+16、DMA传输不锁
+17、DMA通道传输使能
+
+
+i2s DMA配置：
+1、
+NVIC_InitTypeDef NVIC_InitStruct = {0};
+    NVIC_InitStruct.NVIC_IRQChannel = IIS_DMA_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStruct);
+2、配置外设复位，配合Scu_Setdevice_ResetRelease  使用，先reset,然后release，外设复位完成
+    Scu_Setdevice_Reset((unsigned int)IIS_DMA_BASE);
+    Scu_Setdevice_ResetRelease((unsigned int)IIS_DMA_BASE);
+	IIS_DMA_RXInit_Typedef IISDMARX_Init_Struct = {0};
+	Scu_Setdevice_Reset((unsigned int)IIS0);
+    Scu_Setdevice_ResetRelease((unsigned int)IIS0);
+3、设置时钟开关
+	Scu_SetDeviceGate((unsigned int)IIS_DMA_BASE,ENABLE);
+	Scu_SetDeviceGate((unsigned int)IIS0,ENABLE);
+4、:配置管脚复用对应功能
+	Scu_SetIOReuse(I2S0_SCLK_PAD,FIRST_FUNCTION);
+    Scu_SetIOReuse(I2S0_LRCLK_PAD,FIRST_FUNCTION);
+    Scu_SetIOReuse(I2S_MCLK_PAD,FIRST_FUNCTION);
+    Scu_SetIOReuse(I2S0_SDI_PAD,FIRST_FUNCTION);
+5、配置i2sDMA接配置
+	IISDMARX_Init_Struct.rxaddr = 0x704a0000;//0x704a0000;//0x20020000;
+    IISDMARX_Init_Struct.rxinterruptsize = IISDMA_RX32Interrupt;//IISDMA_RX32Interrupt;
+    IISDMARX_Init_Struct.rollbackaddrsize = IISDMA_RXTX1024RollbackADDR;//IISDMA_RXTX1024RollbackADDR;
+    IISDMARX_Init_Struct.rxsinglesize = IISDMA_TXRXSINGALESIZE32bytes;
+    IISDMARX_Init_Struct.rxdatabitwide = IIS_TXRXDATAWIDE16BIT;
+    IISDMARX_Init_Struct.sck_lrck = IIS_BUSSCK_LRCK64;
+    IISDMARX_Init_Struct.rxdatafmt = IIS_RXDATAFMT_LEFT_JUSTIFIED;//左对齐
+    // IISDMARX_Init_Struct.rxdatafmt = IIS_RXDATAFMT_IIS;//标准模式
+    IISDMARX_Init_Struct.oversample = IIS_OverSample256Fs;
+    IIS_RXMODEConfig(IIS0,IIS_MERGE_NONE,IIS_LR_LEFT_HIGH_RIGHT_LOW,IIS_RXMODE_MONO);
+	IISx_RXInit(IIS0,&IISDMARX_Init_Struct);	
+	IISDMA_ADDRRollBackINT(IIS0DMA,IISxDMA_RX_EN,ENABLE);
+    *(volatile unsigned int *)(0x40015000 + 0x0) |= ((0x1 << 0) | (0x1 << 6));
