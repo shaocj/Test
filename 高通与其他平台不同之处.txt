@@ -1,0 +1,30 @@
+高通与其他平台不同处：
+1：
+paltform的作用是控制数据在处理器内部（无论是cpu还是dsp）搬移，即：把数据流从接收端口的缓冲区中搬移到发送端口的缓冲区中，并控制dai
+进行数据传输。按照系统框架的设计，在cpu里面，platform的体现就是当用户打开一个pcm设备并向pcm设备写入音频数据后，platform负责把数据
+从pcm设备驱动的接收缓冲区中搬移到cpu dai的发送缓冲区中，并通过cpu dai进行数据传输。
+	但是！！！高通平台好像并不是这样，事实上cpu dai（fe），除了维护了asoc框架的一致性以及充当了dapm上面的一个端点之外并没有其他实
+质性的作用。作为dai（数字音频接口）最核心的功能应该是提供数据传输接口的dirver，也就是dai driver的，但是这里他并没有提供数据传输能
+力，真实的数据传输能力（即cpu与dsp通信的能力）是通过smem、smd以及smmu相关driver共同完成的，由platform直接调用。这样做的原因可能是
+因为cpu与dsp之间的通信不仅仅涉及到audio还涉及到很多地方，他们是一个公用的driver，不像i2s，一旦给audio用了他就一定是audio独占的接
+口，但cpu与dsp之间传输的远不止audio的内容，所以这里的dai就不再提供dai driver了，而是让platform自己去调用该平台下的cpu与dsp之间的
+通信接口。关于cpu与dsp之间的通信比较复杂，这里就不展开了，详细记录在另外的几篇笔记里。
+
+2：
+	简单来说就是当数据准备好之后，根据实际数据来设置一些音频流的参数，同样，在prepare被调用后函数内会分别调用所有的dai、platform、
+dai link自己的prepare函数，如果需要处理prepare的话各自就实现该函数。
+	不过在高通平台上似乎没有那么简单，首先，fe的platform在prepare的时候会操作msm_audio，向dsp设置相关的操作，be的platform在prepare
+的时候要打开一个adm，并对dsp内部音频链路上的处理过程进行配置，这块跟dsp结合很紧，里面东西也很多，下次在单独的文章中分析。fe的
+cpu dai以及codec dai都没有实现，be的cpu dai在prepare时会启动dsp上对应的afe port(其实就是dsp音频链路最后的处理单元，这个处理单
+元后面就是音频输出的物理接口了)，be的codec dai设置了一下silm接口的宽度。
+
+3、trigger只在fe platform中实现了，因为在msm8996平台上也只有cpu需要启动对dsp的数据传输，而trigger中也并不是启动的dma传输，是高通
+自己cpu与dsp的通信接口，所以，其实在整个音频链路中并不是绝对的dma操作，dma控制器也并不是都在cpu上，所以网上其他文章写的也只是一个
+通用模型，针对不同平台区别其实比较大，比如高通平台，这里的数据搬移跟cpu关系并不到，应该是cpu与dsp通过smmu映射了一段内存，然后通过
+smd把内存地址通知对方，dsp再通过dma之类的操作去搬移数据(由于高通不开放dsp源码，根据linux和高通相关说明文档，暂时猜测是这样，即便不
+是这样我觉得也跟这差不远)。
+
+4、ASoC这块，mtk基本上还是停留在很过去的实现方式上，没有DPCM，没有widgets，control的配置基本上是在代码里面写死的，offload流也是另
+辟蹊径，完全没有纳入ASoC的体系，mtk可以说是做的非常简陋，就记录一个地方吧，offload流，mtk在这里没有把offload数据纳入ASoC，而是自己
+另辟蹊径，创造了一个"offloadservice"设备，所有的offload数据hal层通过该设备交给kernel，同时hal层通过"audio_ipi"设备与dsp交互控制指
+令，以此实现了mp3的硬解码功能……
