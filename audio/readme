@@ -21,3 +21,12 @@ http://thinks.me/2016/04/09/audio_a2dp/#more
                                                config,
                                                &outStream,
                                                address.string());
+                                               
+                                               
+   AudioTrack有两种数据加载类型：MODE_STATIC和MODE_STREAM。
+
+这两种加载类型的不同点在于何时将音频数据写到AuidoTrack中去。
+
+MODE_STATIC模式下，需要在AudioTrack start之前，将这个缓冲区中的数据一次性write到AudioTrack 中去，后续就不需要再写入了。这种模式适合小文件的播放；
+
+MODE_STREAM模式下，需要在播放的过程中，不断调用AudioTrack的write方法，将音频数据写入到AudioTrack中。这种模式适合大文件，或者实时音频流的播放。
