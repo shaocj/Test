@@ -17,6 +17,8 @@ alsa arecord/aplay
 
 重要：
 https://blog.csdn.net/whshiyun/article/details/80889838
+dai link是链接cpu dai和codec dai或者其他设备dai的东西，而且这个关系是在硬件制作时已经做死了的，同时每个链接也是绝对有物理意义的（不会出现dummy之类的事），所以在mechine driver中把dai link写死就好了，每次open pcm设备时打开的就是相应的dai link。
+
 https://blog.csdn.net/whshiyun/article/details/81534494
 Linux/Android alsa codec音频路由dapm的配置详解
 https://blog.csdn.net/lp542718520/article/details/77806394
