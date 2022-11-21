@@ -33,7 +33,7 @@ https://blog.csdn.net/mirkerson/article/details/70213066
 
 Linux/Android alsa codec音频路由dapm的配置详解
 https://blog.csdn.net/lp542718520/article/details/77806394
-
+https://cloud.tencent.com/developer/article/1078002
 
 ALSA音频声卡驱动架构篇：
 https://blog.csdn.net/sunjing_/article/details/79145372
@@ -49,17 +49,85 @@ https://blog.csdn.net/qingkongyeyue/article/details/52349120
 https://blog.csdn.net/qingkongyeyue/article/details/52355171
 https://blog.csdn.net/qq_26093511/article/details/78904072
 https://blog.csdn.net/eydwyz/article/details/71410560
+https://blog.csdn.net/Bill_xiao/article/details/104773475
+https://blog.csdn.net/Bill_xiao/article/details/104773475
 高通平台ASOC声卡驱动路径分析篇：
 https://blog.csdn.net/whshiyun/article/details/80889838
-
 
 高通dsp driver
 https://blog.csdn.net/whshiyun/article/details/81534494
 
 Framework AudioPolicy等:
 https://blog.csdn.net/Ciellee/article/details/101980726
-
+https://blog.csdn.net/DroidPhone/article/details/5949280
+https://blog.csdn.net/zyuanyun/article/details/60890534
+https://www.cnblogs.com/CoderTian/p/6446187.html
+https://blog.csdn.net/pain_pain_pain_pain/article/details/52385767
+https://www.icode9.com/content-1-985831.html
+audioserver启动：
+https://blog.csdn.net/lzqustc/article/details/117166252?spm=1001.2014.3001.5501
+https://blog.csdn.net/Qidi_Huang/article/details/72912323
+thread track:
+https://blog.csdn.net/VNanyesheshou/article/details/115728308?spm=1001.2014.3001.5502
 
 Framework LoopBack:
 https://blog.csdn.net/shell812/article/details/73467010
+
+Framework音量调节：
+https://blog.csdn.net/qq_43443900/article/details/103902402
+https://blog.csdn.net/m0_37437363/article/details/78910287
+
+audio pathcb:
+https://blog.csdn.net/yzhang8703/article/details/47660803
+
+mixer_paths.xml分析：
+https://blog.csdn.net/qq_38091632/article/details/104406783?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task
+*https://blog.csdn.net/q1075355798/article/details/80657365(流向有点错误)
+mixer初始化：
+https://blog.csdn.net/weixin_33863087/article/details/85968023?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task
+
+audio不错blog:
+https://blog.csdn.net/Ciellee/article/list/2
+
+usb 声卡注册：
+
+
+audio debug相关方法：
+https://ciellee.blog.csdn.net/article/details/103234839
+
+高通平台如何动态兼容多套音频参数文件？
+https://blog.csdn.net/crow_ch/article/details/103886156
+
+高通平台路由选择：
+https://blog.csdn.net/azloong/article/details/79383323
+
+
+offload跟mixer线程的区别，其实主要是基本上没有mixer的处理，直接绕过audioflinger的采样率、format、采样精度、通道数等的转变，所以其实offload的逻辑是更简单的。
+看到判断依据是audio_policy.conf中compressoffload的节点中的flag是否带有non_blocking，如果有还需要确认底层是否支持callback的场景，如果支持的话，则告诉hal层，我们这边的回调函
+数是哪个，并且创造callback的线程来。这个线程在这个场景中至关重要，它会等到底层有空间的时候来唤醒offload线程去通知app来填充数据。
+  AudioTrack已经创建出来了，那第二步就是执行它的play方法，最后才是写数据.
+  AudioTrack创建结束就已经代表了你已经完成了对空间的申请了，并且在output thread中也有track的对象存在，只是如果没有执行play的话，那这个track是不属于active track，output thread在执行的过程中，并不会去看这个track的数据是否已经填充满了。
+  获取output，这个output对应到AudioFlinger中的某个output thread，每个thread都会含有一个hal的output。通过这个output去获取hal层当前设置的samplingRate。。每一个output都对应到audio_policy.conf中的一个port节点。
+  这个samplingRate的值基本上就是第一个打开这个output的时候设置的，除非后面有通过setparameter进行重新设置，否则这个值就是这样了。它也必须跟audio_policy.conf中一致的。
+  我们已经有output了，并且获取到了samplingRate了，那接下来就是framecount和latency，而这两个值都是hal层的数据。并不是我们open output的时候传递进去的，不过获取的逻辑基本上跟上面获取samplingRate是一致的。
+  fast跟direct不能共存。fast在mixer线程，direct在direct线程.
+  如果是含有direct flag，并且是线性pcm的话，我们需要根据fomat和channelCount来计算帧大小.否则，如果不是线性pcm的话，那帧大小设置为1个字节，8位。
+  AudioPolicyManager在进行初始化的时候会去解析audio_policy.conf文件，会创建Flag为primary的output，在open的过程中会将audio_policy.conf中关于该节点的数据传递给底层streamout对象，每个线程都有自己的streamout对象：
+    status_t status = hwDevHal->open_output_stream(hwDevHal,
+                                               *output,
+                                               devices,
+                                               flags,
+                                               config,
+                                               &outStream,
+                                               address.string());
+                                               
+                                               
+   AudioTrack有两种数据加载类型：MODE_STATIC和MODE_STREAM。
+
+这两种加载类型的不同点在于何时将音频数据写到AuidoTrack中去。
+
+MODE_STATIC模式下，需要在AudioTrack start之前，将这个缓冲区中的数据一次性write到AudioTrack 中去，后续就不需要再写入了。这种模式适合小文件的播放；
+
+MODE_STREAM模式下，需要在播放的过程中，不断调用AudioTrack的write方法，将音频数据写入到AudioTrack中。这种模式适合大文件，或者实时音频流的播放。
+
 
